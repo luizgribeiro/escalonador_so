@@ -6,6 +6,11 @@ def gen_io_type():
 
 def gen_process_list(p_max_time, qt_max_io):
 
+<<<<<<< HEAD
+=======
+    #setando semente inicial => para mesmos parametros resultados iguais
+    #seed(0)
+>>>>>>> 0e8b382dbcf0bcbf224655bfc1a49cd65324ef40
 
     #utilizando tempo maximo de processo para definir tempo do processo
     process_time = randint(1, p_max_time)
