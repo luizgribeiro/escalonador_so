@@ -1,9 +1,13 @@
 #-*-coding:utf-8-*-
 from collections import namedtuple
 import argparse
+from random import seed 
 
 if __name__ == '__main__':
 
+    #setando semente inicial => para mesmos parametros resultados iguais
+    seed(0)
+    
     parser = argparse.ArgumentParser(description='Simulador de escalonador de processos')
     #numero de processos
     parser.add_argument('--pmax', required=False, type=int, default=100,
@@ -28,7 +32,6 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-
 
 
     #tuplas STRUCTS
