@@ -27,12 +27,9 @@ lt = []
 for i in range(14):
 
     lista , pnumber = gen_valid_pid(lt, 10, 20)
-
-    if i % 3 ==0 and i != 0:
-        del lista[randint(0,len(lista))]
-
     print(lista)
     print(pnumber)
+
         
     
     
