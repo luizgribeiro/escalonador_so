@@ -2,7 +2,13 @@ from random import randint
 
 def gen_io_type():
     # 0=>IO fita, 1=>IO disco, 2=>IO printer
-    return randint(0, 2)
+    io_type = randint(0, 2)
+    if io_type == 0:
+        return 'tape'
+    elif io_type == 1:
+        return 'disc'
+    else:
+        return 'printer'
 
 def gen_process_event(p_max_time, qt_max_io):
 
@@ -10,17 +16,17 @@ def gen_process_event(p_max_time, qt_max_io):
     process_time = randint(1, p_max_time)
 
     #utilizando numero maximo de ios para definir quantidade de ventos
-    qtt_io = randint(0, qt_max_io)
+    if qt_max_io > process_time - 2:
+        qtt_io = randint(0, process_time-1)
+    else:
+        qtt_io = randint(0, qt_max_io)
 
     io_list = []
     #generating IO timestamps
     if qtt_io > 0 :
         for io_num in range(0, qtt_io):
-            next_io = randint(1, process_time-1)
-            if next_io not in io_list:
-                io_list.append(next_io)
-            else:
-                io_num -= 1
+            io_time = randint(1, process_time-1)
+            io_list.append(io_time)
 
     io_list.sort()
 

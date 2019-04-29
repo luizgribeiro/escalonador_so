@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Simulador de escalonador de processos')
     #numero de processos
-    parser.add_argument('--pmax', required=False, type=int, default=100,
+    parser.add_argument('--pmax', required=False, type=int, default=5,
                         dest='max_process',
                         help='Número máximo de processos permitidos')
     #fatia de tempo (quantum)
