@@ -6,6 +6,7 @@ def generate_ptime(last_start, p_duration, diff_arrival_time):
     delta = randint(0, diff_arrival_time)
     #adding to last process start
     pstart = last_start + delta
+    
 
     return pstart, p_duration
 
