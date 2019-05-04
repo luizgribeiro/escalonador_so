@@ -1,10 +1,54 @@
 #-*-coding:utf-8-*-
-from collections import namedtuple
+from recordtype import recordtype
+#from collections import namedtuple
 import argparse
 from random import seed 
 from process_gen import gen_process_event
 from pid_gen import gen_valid_pid
 from ptime import generate_ptime
+
+def gera_chegada(all_processes_list, tempo):
+
+    arrival_list = []
+    for proc in all_processes_list:
+        if proc.start_time == tempo:
+            arrival_list.append(proc.pid)
+            print(f"Gerei chegada de {proc.pid}")
+
+    return arrival_list
+
+def set_running(pid, all_processes_list):
+
+    for proc in all_processes_list:
+        if proc.pid == pid:
+            proc.status = 'running'
+
+def set_active(pid, all_processes_list):
+
+    for proc in all_processes_list:
+        if proc.pid == pid:
+            proc.status = 'active'
+
+def dec_proc_time(pid, all_processes_list):
+
+    for proc in all_processes_list:
+        if proc.pid == pid:
+            proc.count_duration -= 1
+
+def switch_context(queue, all_processes_list):
+
+    running_pid = queue[0]
+
+    set_active(running_pid, all_processes_list)
+    del queue[0]
+    queue.append(running_pid)
+
+
+def print_processes(all_processes):
+
+    for proc in all_processes:
+        print(proc)
+
 
 if __name__ == '__main__':
 
@@ -37,6 +81,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #initial scheduler setup
+    time = 0
+    quantum = args.quantum
     all_processes = []
     active_pids = []
     high_priority_queue = []
@@ -49,7 +95,7 @@ if __name__ == '__main__':
     
 
     #tuplas STRUCTS
-    process = namedtuple("Process", "pid, start_time, p_time, count_duration, event_info, ppid, prioridade, status")
+    process = recordtype("Process", "pid, start_time, p_time, count_duration, event_info, ppid, prioridade, status")
 
     #seeting up initial process time 0
     active_pids, pid = gen_valid_pid(active_pids, initial_pid , args.max_process)
@@ -58,7 +104,6 @@ if __name__ == '__main__':
     count_duration = p_time
     proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active')
 
-    high_priority_queue.append(proc_created)
     all_processes.append(proc_created)
 
     #generate processes
@@ -75,10 +120,34 @@ if __name__ == '__main__':
         proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active')
 
         #updating process list
-        high_priority_queue.append(proc_created)
         all_processes.append(proc_created)
 
 
     for i in all_processes:
         print(i)
 
+    print("##################PROCESSOS CRIADOS!###########################")
+
+    while True:
+
+        #generating process arrival
+        high_priority_queue.extend(gera_chegada(all_processes, time))
+        #print(high_priority_queue)
+
+        #getting current running process =======> TODO: low priority queue
+        current_proc = high_priority_queue[0]
+        set_running(current_proc, all_processes)
+        dec_proc_time(current_proc, all_processes)
+        print(f"--------------{quantum}")
+        print_processes(all_processes)
+        quantum -= 1
+
+
+        time += 1
+
+        if quantum == 0:
+            quantum = args.quantum
+            switch_context(high_priority_queue, all_processes)
+
+        if time > 20:
+            break
