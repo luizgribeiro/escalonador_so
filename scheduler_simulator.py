@@ -37,18 +37,85 @@ def dec_proc_time(pid, all_processes_list):
 
 def switch_context(queue, all_processes_list):
 
-    running_pid = queue[0]
+    if queue:
+        running_pid = queue[0]
 
-    set_active(running_pid, all_processes_list)
-    del queue[0]
-    queue.append(running_pid)
+        set_active(running_pid, all_processes_list)
+        del queue[0]
+        queue.append(running_pid)
+
+def check_halt(pid, all_processes_list):
+
+    for proc in all_processes_list:
+        if proc.pid == pid and proc.count_duration == 0:
+            proc.status = 'halt'
+            return True
+    
+    return False
+
+def check_io(pid, all_processes_list, io_queue, io_times, running_queue):
+
+    #getting running process
+    for proc in all_processes_list:
+        if proc.pid == pid:
+            #getting elapsed time 
+            elapsed_time = proc.p_time - proc.count_duration
+            #searching in process io events to find its times
+            for io_event in proc.event_info:
+                if elapsed_time == io_event[0]:
+                    #adding pid, event type and io time io queue
+                    io_queue.append([pid, io_event[1], io_times[io_event[1]]])
+                    #updating IO events to be done
+                    proc.status = f'blocked {io_event[1]}'
+                    running_queue.remove(pid)
+                    proc.event_info.remove(io_event)
+
+                    return True
+
+    else:
+        return False
+
+def set_proc_status(pid, all_processes_list, status):
+
+    for proc in all_processes_list:
+        if proc.pid == pid:
+            proc.status = status
+        
+
+def io_queue_manager(io_queue, running_queue, all_processes_list):
+
+    for io_proc in io_queue:
+        #dec io time
+        io_proc[2] -= 1
+        if io_proc[2] == 0:
+            set_proc_status(io_proc[0], all_processes_list, 'active')
+            running_queue.append(io_proc[0])
+            io_queue.remove(io_proc)
 
 
+def simulation_end(all_processes_list):
+
+    end_count = 0
+    for proc in all_processes_list:
+        if proc.status == 'halt':
+            end_count += 1
+
+    if end_count == len(all_processes_list):
+        return True
+    else:
+        return False
+        
 def print_processes(all_processes):
 
     for proc in all_processes:
         print(proc)
 
+def print_process_list(pid, all_processes_list):
+
+    for proc in all_processes_list:
+        for number in pid:
+            if proc.pid == number:
+                print(proc)
 
 if __name__ == '__main__':
 
@@ -82,6 +149,7 @@ if __name__ == '__main__':
 
     #initial scheduler setup
     time = 0
+    io_times = {'disc': args.disc_time, 'tape': args.tape_time,'printer': args.printer_time}
     quantum = args.quantum
     all_processes = []
     active_pids = []
@@ -123,25 +191,36 @@ if __name__ == '__main__':
         all_processes.append(proc_created)
 
 
-    for i in all_processes:
-        print(i)
-
     print("##################PROCESSOS CRIADOS!###########################")
 
     while True:
+        print(f"--------------delta-quantum: {quantum}, tempo decorrido: {time}")
+
+        #getting current running process =======> TODO: low priority queue
+        if high_priority_queue:
+        #getting current process
+            current_proc = high_priority_queue[0]
+            #setting current proc status to runnig
+            set_running(current_proc, all_processes)
+            # if needed sends current process to io
+            if not check_io(current_proc, all_processes, io_queue, io_times, high_priority_queue):
+                #decrease process time
+                dec_proc_time(current_proc, all_processes)
+
+            if check_halt(current_proc, all_processes):
+                del high_priority_queue[0]
+
+            print_process_list(high_priority_queue, all_processes)
+        
+        #decrement io time from every process in io queue
+        io_queue_manager(io_queue, high_priority_queue, all_processes)
+        print(f' io_queue: {io_queue}')
 
         #generating process arrival
         high_priority_queue.extend(gera_chegada(all_processes, time))
-        #print(high_priority_queue)
 
-        #getting current running process =======> TODO: low priority queue
-        current_proc = high_priority_queue[0]
-        set_running(current_proc, all_processes)
-        dec_proc_time(current_proc, all_processes)
-        print(f"--------------{quantum}")
-        print_processes(all_processes)
-        quantum -= 1
 
+        quantum -= 1 
 
         time += 1
 
@@ -149,5 +228,6 @@ if __name__ == '__main__':
             quantum = args.quantum
             switch_context(high_priority_queue, all_processes)
 
-        if time > 20:
+        if simulation_end(all_processes):
             break
+
