@@ -35,14 +35,21 @@ def dec_proc_time(pid, all_processes_list):
         if proc.pid == pid:
             proc.count_duration -= 1
 
-def switch_context(queue, all_processes_list):
+def switch_context(queue, all_processes_list, low_priority_queue):
 
     if queue:
         running_pid = queue[0]
 
         set_active(running_pid, all_processes_list)
         del queue[0]
-        queue.append(running_pid)
+        change_priority(running_pid, all_processes_list, 1)
+        low_priority_queue.append(running_pid)
+        
+def change_priority(pid, all_processes_list, new_priority):
+
+    for proc in all_processes_list:
+        if proc.pid == pid:
+            proc.priority = new_priority
 
 def check_halt(pid, all_processes_list):
 
@@ -52,6 +59,22 @@ def check_halt(pid, all_processes_list):
             return True
     
     return False
+
+def dispatch_process(process_queue, all_process, io_queue, io_times):
+
+            #getting current process
+            current_proc = process_queue[0]
+            #setting current proc status to runnig
+            set_running(current_proc, all_processes)
+            # if needed sends current process to io
+            if not check_io(current_proc, all_processes, io_queue, io_times, process_queue):
+                #decrease process time
+                dec_proc_time(current_proc, all_processes)
+
+            if check_halt(current_proc, all_processes):
+                del process_queue[0]
+
+            #print_process_list(high_priority_queue, all_processes)
 
 def check_io(pid, all_processes_list, io_queue, io_times, running_queue):
 
@@ -82,14 +105,19 @@ def set_proc_status(pid, all_processes_list, status):
             proc.status = status
         
 
-def io_queue_manager(io_queue, running_queue, all_processes_list):
+def io_queue_manager(io_queue, high_priority_queue, low_priority_queue, all_processes_list):
 
     for io_proc in io_queue:
         #dec io time
         io_proc[2] -= 1
         if io_proc[2] == 0:
             set_proc_status(io_proc[0], all_processes_list, 'active')
-            running_queue.append(io_proc[0])
+            #if comming from disc, go to low priority queue
+            if io_proc[1] == 'disc':
+                low_priority_queue.append(io_proc[0])
+                change_priority(io_proc[0], all_processes_list, 1)
+            else:
+                high_priority_queue.append(io_proc[0])
             io_queue.remove(io_proc)
 
 
@@ -163,7 +191,7 @@ if __name__ == '__main__':
     
 
     #tuplas STRUCTS
-    process = recordtype("Process", "pid, start_time, p_time, count_duration, event_info, ppid, prioridade, status")
+    process = recordtype("Process", "pid, start_time, p_time, count_duration, event_info, ppid, priority, status")
 
     #seeting up initial process time 0
     active_pids, pid = gen_valid_pid(active_pids, initial_pid , args.max_process)
@@ -194,39 +222,56 @@ if __name__ == '__main__':
     print("##################PROCESSOS CRIADOS!###########################")
 
     while True:
-        print(f"--------------delta-quantum: {quantum}, tempo decorrido: {time}")
 
-        #getting current running process =======> TODO: low priority queue
         if high_priority_queue:
-        #getting current process
-            current_proc = high_priority_queue[0]
-            #setting current proc status to runnig
-            set_running(current_proc, all_processes)
-            # if needed sends current process to io
-            if not check_io(current_proc, all_processes, io_queue, io_times, high_priority_queue):
-                #decrease process time
-                dec_proc_time(current_proc, all_processes)
+            qtdd_proc_io = len(io_queue)
+            dispatch_process(high_priority_queue, all_processes, io_queue, io_times)
+            quantum -= 1 
+            print(f"============delta-quantum: {quantum}, tempo decorrido: {time}============")
+            #if process went to io, restart quantum
+            if qtdd_proc_io < len(io_queue):
+                quantum = args.quantum
 
-            if check_halt(current_proc, all_processes):
-                del high_priority_queue[0]
-
+            print('------------high priority queue------------')
             print_process_list(high_priority_queue, all_processes)
+            print("------------low priority queue------------")
+            print_process_list(low_priority_queue, all_processes)
+
+
+        elif low_priority_queue:
+
+            current_proc = low_priority_queue[0]
+            change_priority(current_proc, all_processes, 0)
+            low_priority_queue.remove(current_proc)
+            high_priority_queue.append(current_proc)
+            qtdd_proc_io = len(io_queue)
+            dispatch_process(high_priority_queue, all_processes, io_queue, io_times)
+            if qtdd_proc_io < len(io_queue):
+                quantum = args.quantum
+
+            print('------------high priority queue------------')
+            print_process_list(high_priority_queue, all_processes)
+            print("------------low priority queue------------")
+            print_process_list(low_priority_queue, all_processes)
+
+
+            quantum -= 1 
         
         #decrement io time from every process in io queue
-        io_queue_manager(io_queue, high_priority_queue, all_processes)
-        print(f' io_queue: {io_queue}')
+        io_queue_manager(io_queue, high_priority_queue, low_priority_queue, all_processes)
+        print(f'------------io_queue:\n {io_queue}\n------------')
 
         #generating process arrival
         high_priority_queue.extend(gera_chegada(all_processes, time))
 
 
-        quantum -= 1 
+        print('====================================\n')
 
         time += 1
 
         if quantum == 0:
             quantum = args.quantum
-            switch_context(high_priority_queue, all_processes)
+            switch_context(high_priority_queue, all_processes, low_priority_queue)
 
         if simulation_end(all_processes):
             break
