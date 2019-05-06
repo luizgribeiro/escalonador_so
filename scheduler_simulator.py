@@ -5,7 +5,8 @@ import csv
 import argparse
 from random import seed 
 from process_gen import gen_process_event
-from pid_gen import gen_valid_pid
+from pid_gen import gen_valid_pid   
+
 from ptime import generate_ptime
 
 def gera_chegada(all_processes_list, tempo):
@@ -172,8 +173,14 @@ if __name__ == '__main__':
     parser.add_argument('--tprint', required=False, type=int, default=6,
                         dest='printer_time',
                         help='tempo de IO gasto com impressão default(6)')
-
-
+    #tempo máximo de cada processo
+    parser.add_argument('--tproc', required=False, type=int, default=10,
+                        dest='max_proc_time',
+                        help='tempo máximo de um processo default(10)')
+    #numero maximo de operacoes de io
+    parser.add_argument('--nio', required=False, type=int, default=3,
+                        dest='max_n_io',
+                        help='tempo máximo de um processo default(3)')
     args = parser.parse_args()
 
     #initial scheduler setup
@@ -200,7 +207,7 @@ if __name__ == '__main__':
 
     #seeting up initial process time 0
     active_pids, pid = gen_valid_pid(active_pids, initial_pid , args.max_process)
-    p_time, p_events = gen_process_event(10, 3)
+    p_time, p_events = gen_process_event(args.max_proc_time, args.max_n_io)
     start_time = 0
     count_duration = p_time
     proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active')
