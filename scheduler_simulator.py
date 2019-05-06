@@ -1,5 +1,6 @@
 #-*-coding:utf-8-*-
 from recordtype import recordtype
+import csv
 #from collections import namedtuple
 import argparse
 from random import seed 
@@ -188,7 +189,11 @@ if __name__ == '__main__':
     init = 1
     initial_pid = 100
     diff_arrival = 5
-    
+
+    csv_file = open('escalonador.csv', 'w', newline='')
+    time_logger = csv.writer(csv_file)
+    time_logger.writerow(['Tempo', 'Processo'])
+
 
     #tuplas STRUCTS
     process = recordtype("Process", "pid, start_time, p_time, count_duration, event_info, ppid, priority, status")
@@ -225,6 +230,7 @@ if __name__ == '__main__':
 
         if high_priority_queue:
             qtdd_proc_io = len(io_queue)
+            current_proc = high_priority_queue[0]
             dispatch_process(high_priority_queue, all_processes, io_queue, io_times)
             quantum -= 1 
             print(f"============delta-quantum: {quantum}, tempo decorrido: {time}============")
@@ -237,6 +243,8 @@ if __name__ == '__main__':
             print("------------low priority queue------------")
             print_process_list(low_priority_queue, all_processes)
 
+
+            time_logger.writerow([time, current_proc])
 
         elif low_priority_queue:
 
@@ -255,7 +263,11 @@ if __name__ == '__main__':
             print_process_list(low_priority_queue, all_processes)
 
 
+            time_logger.writerow([time, current_proc])
             quantum -= 1 
+        else:
+            
+            time_logger.writerow([time, -1])
         
         #decrement io time from every process in io queue
         io_queue_manager(io_queue, high_priority_queue, low_priority_queue, all_processes)
