@@ -221,7 +221,9 @@ if __name__ == '__main__':
         #generating process duration and events
         p_time, p_events = gen_process_event(10, 3)
         #generating arrival time and adding a counter to check duration
-        start_time, count_duration = generate_ptime(all_processes[-1].start_time, p_time, diff_arrival)
+        _, count_duration = generate_ptime(all_processes[-1].start_time, p_time, diff_arrival)
+        #generating initial time for new processes every 3 seconds (new specification -- )
+        start_time += 3
 
 
         #creating process with all the information
