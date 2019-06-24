@@ -1,10 +1,11 @@
 #-*-coding:utf-8-*-
 from recordtype import recordtype
 import csv
+from time import sleep
 #from collections import namedtuple
 import argparse
 from random import seed 
-from process_gen import gen_process_event
+from process_gen import gen_process_event, gen_page_access, gen_page_num
 from pid_gen import gen_valid_pid   
 
 from ptime import generate_ptime
@@ -181,6 +182,15 @@ if __name__ == '__main__':
     parser.add_argument('--nio', required=False, type=int, default=3,
                         dest='max_n_io',
                         help='tempo máximo de um processo default(3)')
+    #numero de frames que a memória comporta 
+    parser.add_argument('--nframes', required=False, type=int, default=64,
+                        dest='num_frames',
+                        help='Número de frames na memória default(64)')
+    #numero maximo de operacoes de io
+    parser.add_argument('--max_pages', required=False, type=int, default=64,
+                        dest='max_pages',
+                        help='Número máximo de páginas de um processo default(64)')
+    
     args = parser.parse_args()
 
     #initial scheduler setup
@@ -203,14 +213,16 @@ if __name__ == '__main__':
 
 
     #tuplas STRUCTS
-    process = recordtype("Process", "pid, start_time, p_time, count_duration, event_info, ppid, priority, status")
+    process = recordtype("Process", """pid, start_time, p_time, count_duration,
+                          event_info, ppid, priority, status, npages, loaded_pages""")
 
     #seeting up initial process time 0
     active_pids, pid = gen_valid_pid(active_pids, initial_pid , args.max_process)
     p_time, p_events = gen_process_event(args.max_proc_time, args.max_n_io)
     start_time = 0
     count_duration = p_time
-    proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active')
+    n_pages = gen_page_num(args.max_pages)
+    proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active', n_pages, [])
 
     all_processes.append(proc_created)
 
@@ -224,10 +236,12 @@ if __name__ == '__main__':
         _, count_duration = generate_ptime(all_processes[-1].start_time, p_time, diff_arrival)
         #generating initial time for new processes every 3 seconds (new specification -- )
         start_time += 3
+        #generating number of pages
+        n_pages = gen_page_num(args.max_pages)
 
 
         #creating process with all the information
-        proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active')
+        proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active', n_pages, [])
 
         #updating process list
         all_processes.append(proc_created)
@@ -236,6 +250,7 @@ if __name__ == '__main__':
     print("##################PROCESSOS CRIADOS!###########################")
 
     while True:
+        sleep(1.5)
 
         if high_priority_queue:
             qtdd_proc_io = len(io_queue)

@@ -36,3 +36,10 @@ def gen_process_event(p_max_time, qt_max_io):
         io_time_type_list.append([i, gen_io_type()])
 
     return process_time, io_time_type_list
+
+def gen_page_num(max):
+    return randint(1, max)
+
+def gen_page_access(max):
+    return randint(1, max)
+
