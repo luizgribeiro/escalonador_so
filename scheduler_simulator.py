@@ -79,6 +79,7 @@ def check_loaded(proc, acc_page):
     
     return False
 
+
 def dispatch_process(process_queue, all_process, io_queue, io_times):
 
     #getting current process
@@ -94,6 +95,7 @@ def dispatch_process(process_queue, all_process, io_queue, io_times):
     if check_loaded(proc, acc_page):
         pass
     else:
+        #TODO: Add manage memory function
         print("Não ta carregada --- page fault")
 
     # if needed sends current process to io
