@@ -3,7 +3,6 @@ from recordtype import recordtype
 from colorama import Fore, Style
 import csv
 from time import sleep
-#from collections import namedtuple
 import argparse
 from random import seed 
 from process_gen import gen_process_event, gen_page_access, gen_page_num
@@ -188,7 +187,7 @@ if __name__ == '__main__':
                         dest='max_process',
                         help='Número máximo de processos permitidos')
     #fatia de tempo (quantum)
-    parser.add_argument('-t', required=False, type=int, default=5,
+    parser.add_argument('-t', required=False, type=int, default=10,
                         dest='quantum',
                         help='fatia de tempo máxima dedicada a cada processo')
     #tempo de io gasto com fita
@@ -204,11 +203,11 @@ if __name__ == '__main__':
                         dest='printer_time',
                         help='tempo de IO gasto com impressão default(6)')
     #tempo máximo de cada processo
-    parser.add_argument('--tproc', required=False, type=int, default=10,
+    parser.add_argument('--tproc', required=False, type=int, default=50,
                         dest='max_proc_time',
                         help='tempo máximo de um processo default(10)')
     #numero maximo de operacoes de io
-    parser.add_argument('--nio', required=False, type=int, default=3,
+    parser.add_argument('--nio', required=False, type=int, default=8,
                         dest='max_n_io',
                         help='tempo máximo de um processo default(3)')
     #numero de frames que a memória comporta 
