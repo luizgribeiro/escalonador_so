@@ -82,8 +82,14 @@ def dispatch_process(process_queue, all_process, io_queue, io_times, mem_info):
     set_running(current_proc, all_processes)
     #getting current process
     proc = get_pcb(current_proc, all_process)
-    #generate access page
-    acc_page = gen_page_access(proc.npages)
+    #generate access page after  3 quantuns
+    if proc.access_count == 0 or len(proc.loaded_pages) == 0:
+        proc.access_count = 3 - 1
+        acc_page = gen_page_access(proc.npages)
+    else:
+        #getting last used page
+        acc_page = proc.loaded_pages[-1]
+        proc.access_count -= 1
 
 
     #checking if page is loaded in memory
@@ -248,7 +254,7 @@ if __name__ == '__main__':
 
     #tuplas STRUCTS
     process = recordtype("Process", """pid, start_time, p_time, count_duration,
-                          event_info, ppid, priority, status, npages, loaded_pages""")
+                          event_info, ppid, priority, status, npages, loaded_pages, access_count""")
 
     #seeting up initial process time 0
     active_pids, pid = gen_valid_pid(active_pids, initial_pid , args.max_process)
@@ -256,7 +262,7 @@ if __name__ == '__main__':
     start_time = 0
     count_duration = p_time
     n_pages = gen_page_num(args.max_pages)
-    proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active', n_pages, [])
+    proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active', n_pages, [], 3)
 
     all_processes.append(proc_created)
 
@@ -275,7 +281,7 @@ if __name__ == '__main__':
 
 
         #creating process with all the information
-        proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active', n_pages, [])
+        proc_created = process(pid, start_time, p_time, count_duration, p_events, init, 0, 'active', n_pages, [], 3)
 
         #updating process list
         all_processes.append(proc_created)
