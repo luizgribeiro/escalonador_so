@@ -1,6 +1,7 @@
 #-*-coding:utf-8-*-
 from recordtype import recordtype
 from colorama import Fore, Style
+from memory_manager import check_loaded
 import csv
 from time import sleep
 import argparse
@@ -69,14 +70,7 @@ def get_pcb(target_pid, all_process):
     for proc in all_process:
         if proc.pid == target_pid:
             return proc
-        
-#checking if requested page is loaded in main memory
-def check_loaded(proc, acc_page):
 
-    if acc_page in proc.loaded_pages:
-        return True
-    
-    return False
 
 
 def dispatch_process(process_queue, all_process, io_queue, io_times):
