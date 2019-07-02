@@ -108,6 +108,8 @@ def dispatch_process(process_queue, all_process, io_queue, io_times, mem_info):
 
     if check_halt(current_proc, all_processes):
         events.append(f'processo {current_proc} finalizado com sucesso')
+        #free frames used by halted process
+        mem_info['loaded_pages'] -= len(proc.loaded_pages)
         del process_queue[0]
 
     return events

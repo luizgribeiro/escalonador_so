@@ -4,7 +4,7 @@ def check_loaded(proc, acc_page):
 
     if acc_page in proc.loaded_pages:
         return True
-    
+
     return False
 
 #managing memory when page fault occours
@@ -23,6 +23,7 @@ def manage_memory(process, new_page, mem_info):
         #add page to the process
         else:
             include_page(process, new_page)
+            mem_info['loaded_pages'] += 1
 
     return events
 
