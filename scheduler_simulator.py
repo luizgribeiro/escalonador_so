@@ -17,7 +17,6 @@ def gera_chegada(all_processes_list, tempo):
     for proc in all_processes_list:
         if proc.start_time == tempo:
             arrival_list.append(proc.pid)
-            print(f"Gerei chegada de {proc.pid}")
 
     return arrival_list
 
@@ -73,7 +72,9 @@ def get_pcb(target_pid, all_process):
 
 
 
-def dispatch_process(process_queue, all_process, io_queue, io_times):
+def dispatch_process(process_queue, all_process, io_queue, io_times, n_mem_frames):
+
+    events = []
 
     #getting current process
     current_proc = process_queue[0]
@@ -84,22 +85,26 @@ def dispatch_process(process_queue, all_process, io_queue, io_times):
     #generate access page
     acc_page = gen_page_access(proc.npages)
 
+
     #checking if page is loaded in memory
     if check_loaded(proc, acc_page):
         pass
     else:
         #TODO: Add manage memory function
+        #manage_memory()
         print("Não ta carregada --- page fault")
 
     # if needed sends current process to io
     if not check_io(current_proc, all_processes, io_queue, io_times, process_queue):
-        #decrease process time
         dec_proc_time(current_proc, all_processes)
+    else:
+        events.append(f'processo {current_proc} foi para I/O')
 
     if check_halt(current_proc, all_processes):
+        events.append(f'processo {current_proc} finalizado com sucesso')
         del process_queue[0]
 
-    #print_process_list(high_priority_queue, all_processes)
+    return events
 
 def check_io(pid, all_processes_list, io_queue, io_times, running_queue):
 
@@ -132,11 +137,13 @@ def set_proc_status(pid, all_processes_list, status):
 
 def io_queue_manager(io_queue, high_priority_queue, low_priority_queue, all_processes_list):
 
+    events = []
     for io_proc in io_queue:
         #dec io time
         io_proc[2] -= 1
         if io_proc[2] == 0:
             set_proc_status(io_proc[0], all_processes_list, 'active')
+            events.append(f'processo {io_proc[0]} finalizou I/O')
             #if comming from disc, go to low priority queue
             if io_proc[1] == 'disc':
                 low_priority_queue.append(io_proc[0])
@@ -144,6 +151,7 @@ def io_queue_manager(io_queue, high_priority_queue, low_priority_queue, all_proc
             else:
                 high_priority_queue.append(io_proc[0])
             io_queue.remove(io_proc)
+    return events
 
 
 def simulation_end(all_processes_list):
@@ -268,7 +276,7 @@ if __name__ == '__main__':
         #updating process list
         all_processes.append(proc_created)
 
-
+    events = []
     print(Fore.MAGENTA + "##################PROCESSOS CRIADOS!###########################")
     print(Style.RESET_ALL)
     while True:
@@ -278,7 +286,7 @@ if __name__ == '__main__':
         if high_priority_queue:
             qtdd_proc_io = len(io_queue)
             current_proc = high_priority_queue[0]
-            dispatch_process(high_priority_queue, all_processes, io_queue, io_times)
+            events = dispatch_process(high_priority_queue, all_processes, io_queue, io_times, args.num_frames)
             quantum -= 1 
             print(Fore.GREEN + f"============delta-quantum: {quantum}, tempo decorrido: {time}============")
             #if process went to io, restart quantum
@@ -302,7 +310,8 @@ if __name__ == '__main__':
             low_priority_queue.remove(current_proc)
             high_priority_queue.append(current_proc)
             qtdd_proc_io = len(io_queue)
-            dispatch_process(high_priority_queue, all_processes, io_queue, io_times)
+            events = dispatch_process(high_priority_queue, all_processes, io_queue, io_times, args.num_frames)
+            events.append(f'processo {current_proc} movido para fila de alta prioridade')
             if qtdd_proc_io < len(io_queue):
                 quantum = args.quantum
 
@@ -320,13 +329,21 @@ if __name__ == '__main__':
             time_logger.writerow([time, -1])
         
         #decrement io time from every process in io queue
-        io_queue_manager(io_queue, high_priority_queue, low_priority_queue, all_processes)
+        events.extend(io_queue_manager(io_queue, high_priority_queue, low_priority_queue, all_processes))
         print(Fore.CYAN + f'------------io_queue:\n {io_queue}\n------------')
         print(Style.RESET_ALL)
 
         #generating process arrival
-        high_priority_queue.extend(gera_chegada(all_processes, time))
+        arrival_list = gera_chegada(all_processes, time)
+        for proc in arrival_list:
+            high_priority_queue.append(proc)
+            events.append(f'Gerada chegada do processo {proc}')
 
+        for e in events:
+            print(e)
+
+        #cleaning up events buffer
+        events = []
 
         print(Fore.GREEN + '====================================\n')
         print(Style.RESET_ALL)
