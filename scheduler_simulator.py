@@ -98,7 +98,7 @@ def dispatch_process(process_queue, all_process, io_queue, io_times, mem_info):
         pass
     else:
         events.append(f'Page-fault ocorreu processo {current_proc}, página {acc_page}')
-        events.extend(manage_memory(proc, acc_page, mem_info))
+        events.extend(manage_memory(proc, acc_page, mem_info, process_queue))
 
     # if needed sends current process to io
     if not check_io(current_proc, all_processes, io_queue, io_times, process_queue):
@@ -248,7 +248,7 @@ if __name__ == '__main__':
     init = 1
     initial_pid = 100
     diff_arrival = 5
-    mem_info = {'loaded_pages': 0, 'max_pages': args.max_pages, 'max_loaded': args.max_frame_proc}
+    mem_info = {'loaded_pages': 0, 'max_pages': args.max_pages, 'max_loaded': args.max_frame_proc, 'swap_area': {} }
 
     csv_file = open('escalonador.csv', 'w', newline='')
     time_logger = csv.writer(csv_file)

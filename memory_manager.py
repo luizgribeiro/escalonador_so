@@ -8,14 +8,21 @@ def check_loaded(proc, acc_page):
     return False
 
 #managing memory when page fault occours
-def manage_memory(process, new_page, mem_info):
+def manage_memory(process, new_page, mem_info, process_queue):
 
     events = []
 
     if mem_info['loaded_pages'] == mem_info['max_pages'] :
         #SWAP CASE
         events.append("SWAP")
-        pass
+        #TODO: MAKE SWAP IN => grab a process and add it's pages to mem_info['swap_area'][pid] = len(proc_pages)
+
+        #TODO: insert pages of current proc
+
+        #TODO: update mem_info loaded_pages
+
+        #TODO: Implement where necessary a swap out
+
     else:
         #check if all pages for this process are occupied
         if pages_full(process, mem_info):
@@ -36,6 +43,7 @@ def pages_full(process, mem_info):
     else:
         return False
 
+#change pages of a given process
 def change_pages(process, new_page): 
 
     #deleting page by LRU POLICE
@@ -63,4 +71,6 @@ def LRU_update(process, page):
     #appending page (last used)
     process.loaded_pages.append(page)
 
+def swap_in(process, page, proc_queue):
+    pass
     
