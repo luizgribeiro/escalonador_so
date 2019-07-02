@@ -1,7 +1,7 @@
 #-*-coding:utf-8-*-
 from recordtype import recordtype
 from colorama import Fore, Style
-from memory_manager import check_loaded
+from memory_manager import check_loaded, manage_memory, LRU_update
 import csv
 from time import sleep
 import argparse
@@ -72,7 +72,7 @@ def get_pcb(target_pid, all_process):
 
 
 
-def dispatch_process(process_queue, all_process, io_queue, io_times, n_mem_frames):
+def dispatch_process(process_queue, all_process, io_queue, io_times, mem_info):
 
     events = []
 
@@ -88,11 +88,11 @@ def dispatch_process(process_queue, all_process, io_queue, io_times, n_mem_frame
 
     #checking if page is loaded in memory
     if check_loaded(proc, acc_page):
+        LRU_update(proc, acc_page)
         pass
     else:
-        #TODO: Add manage memory function
-        #manage_memory()
-        print("Não ta carregada --- page fault")
+        events.append(f'Page-fault ocorreu processo {current_proc}, página {acc_page}')
+        events.extend(manage_memory(proc, acc_page, mem_info))
 
     # if needed sends current process to io
     if not check_io(current_proc, all_processes, io_queue, io_times, process_queue):
@@ -216,11 +216,15 @@ if __name__ == '__main__':
     parser.add_argument('--nframes', required=False, type=int, default=64,
                         dest='num_frames',
                         help='Número de frames na memória default(64)')
-    #numero maximo de operacoes de io
+    #numero max de páginas para um processo (random)
     parser.add_argument('--max_pages', required=False, type=int, default=64,
                         dest='max_pages',
                         help='Número máximo de páginas de um processo default(64)')
-    
+    #numero max de páginas para um processo (random)
+    parser.add_argument('--max_frames', required=False, type=int, default=4,
+                        dest='max_frame_proc',
+                        help='Número máximo de frames que um processo pode ter na memoria default(4)')
+                        
     args = parser.parse_args()
 
     #initial scheduler setup
@@ -236,11 +240,11 @@ if __name__ == '__main__':
     init = 1
     initial_pid = 100
     diff_arrival = 5
+    mem_info = {'loaded_pages': 0, 'max_pages': args.max_pages, 'max_loaded': args.max_frame_proc}
 
     csv_file = open('escalonador.csv', 'w', newline='')
     time_logger = csv.writer(csv_file)
     time_logger.writerow(['Tempo', 'Processo'])
-
 
     #tuplas STRUCTS
     process = recordtype("Process", """pid, start_time, p_time, count_duration,
@@ -286,7 +290,7 @@ if __name__ == '__main__':
         if high_priority_queue:
             qtdd_proc_io = len(io_queue)
             current_proc = high_priority_queue[0]
-            events = dispatch_process(high_priority_queue, all_processes, io_queue, io_times, args.num_frames)
+            events = dispatch_process(high_priority_queue, all_processes, io_queue, io_times, mem_info)
             quantum -= 1 
             print(Fore.GREEN + f"============delta-quantum: {quantum}, tempo decorrido: {time}============")
             #if process went to io, restart quantum
@@ -310,7 +314,7 @@ if __name__ == '__main__':
             low_priority_queue.remove(current_proc)
             high_priority_queue.append(current_proc)
             qtdd_proc_io = len(io_queue)
-            events = dispatch_process(high_priority_queue, all_processes, io_queue, io_times, args.num_frames)
+            events = dispatch_process(high_priority_queue, all_processes, io_queue, io_times, mem_info)
             events.append(f'processo {current_proc} movido para fila de alta prioridade')
             if qtdd_proc_io < len(io_queue):
                 quantum = args.quantum
