@@ -98,7 +98,7 @@ def dispatch_process(process_queue, all_process, io_queue, io_times, mem_info):
         pass
     else:
         events.append(f'Page-fault ocorreu processo {current_proc}, página {acc_page}')
-        events.extend(manage_memory(proc, acc_page, mem_info, process_queue))
+        events.extend(manage_memory(proc, acc_page, mem_info, process_queue, all_process))
 
     # if needed sends current process to io
     if not check_io(current_proc, all_processes, io_queue, io_times, process_queue):
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_pages', required=False, type=int, default=64,
                         dest='max_pages',
                         help='Número máximo de páginas de um processo default(64)')
-    #numero max de páginas para um processo (random)
+    #numero max de frames para um processo (random)
     parser.add_argument('--max_frames', required=False, type=int, default=4,
                         dest='max_frame_proc',
                         help='Número máximo de frames que um processo pode ter na memoria default(4)')

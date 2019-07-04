@@ -8,14 +8,18 @@ def check_loaded(proc, acc_page):
     return False
 
 #managing memory when page fault occours
-def manage_memory(process, new_page, mem_info, process_queue):
+def manage_memory(process, new_page, mem_info, process_queue, all_processes):
 
     events = []
 
     if mem_info['loaded_pages'] == mem_info['max_pages'] :
         #SWAP CASE
-        events.append("SWAP")
-        #TODO: MAKE SWAP IN => grab a process and add it's pages to mem_info['swap_area'][pid] = len(proc_pages)
+        #obtendo processo randomicamente para ser swappado
+        swapped = random.choice(process_queue)
+        print(swapped)
+        n_paginas = swap_in(swapped, all_processes, mem_info['swap_area'])
+
+        events.append(f"SWAP in do processo {swapped}. Liberadas {n_paginas} paginas")
 
         #TODO: insert pages of current proc
 
@@ -71,6 +75,24 @@ def LRU_update(process, page):
     #appending page (last used)
     process.loaded_pages.append(page)
 
-def swap_in(process, page, proc_queue):
-    pass
+
+def swap_in(process, all_processes, swap_area):
+
+    target_proc = get_pcb(process, all_processes)
+
+    swap_area[target_proc.pid] = target_proc.loaded_pages
+
+    target_proc.loaded_pages = []
+
+    return len(swap_area[target_proc.pid])
+
+
+#getting current process to do memory managent
+def get_pcb(target_pid, all_process):
+
+    for proc in all_process:
+        if proc.pid == target_pid:
+            return proc
+
+
     
