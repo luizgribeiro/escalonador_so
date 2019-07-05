@@ -12,8 +12,7 @@ def check_loaded(proc, acc_page):
 def manage_memory(process, new_page, mem_info, process_queue, all_processes):
 
     events = []
-    print(mem_info)
-
+    
     #swap out de processos que devem ser executados
     if process.pid in mem_info['swap_area'].keys():
         events.extend(swap_out(process, mem_info, all_processes))

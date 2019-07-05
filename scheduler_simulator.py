@@ -352,6 +352,10 @@ if __name__ == '__main__':
             high_priority_queue.append(proc)
             events.append(f'Gerada chegada do processo {proc}')
 
+        print(Fore.YELLOW + f"-----------swap area:\n {mem_info['swap_area']}\n----------")
+        print(Style.RESET_ALL)
+
+
         for e in events:
             print(e)
 
