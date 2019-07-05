@@ -110,6 +110,7 @@ def dispatch_process(process_queue, all_process, io_queue, io_times, mem_info):
         events.append(f'processo {current_proc} finalizado com sucesso')
         #free frames used by halted process
         mem_info['loaded_pages'] -= len(proc.loaded_pages)
+        proc.loaded_pages = []
         del process_queue[0]
 
     return events
@@ -248,7 +249,7 @@ if __name__ == '__main__':
     init = 1
     initial_pid = 100
     diff_arrival = 5
-    mem_info = {'loaded_pages': 0, 'max_pages': args.max_pages, 'max_loaded': args.max_frame_proc, 'swap_area': {} }
+    mem_info = {'loaded_pages': 0, 'max_pages': args.num_frames, 'max_loaded': args.max_frame_proc, 'swap_area': {} }
 
     csv_file = open('escalonador.csv', 'w', newline='')
     time_logger = csv.writer(csv_file)
